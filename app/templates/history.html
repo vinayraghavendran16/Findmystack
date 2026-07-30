@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}History — Findmystack{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Search history</h1>
+  {% if searches %}
+  <table>
+    <thead><tr><th>Tool</th><th>Vendor URL</th><th>When</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for s in searches %}
+      <tr>
+        <td><a href="/search/{{ s.id }}">{{ s.tool_name }}</a></td>
+        <td class="muted">{{ s.vendor_url or '' }}</td>
+        <td>{{ s.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>{{ s.notes or s.status }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No searches yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

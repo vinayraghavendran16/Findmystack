@@ -1,0 +1,78 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --border: #262b36;
+  --text: #e6e8ef;
+  --muted: #8a92a5;
+  --accent: #7aa2f7;
+  --ok: #9ece6a;
+  --off: #f7768e;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f7f8fb;
+    --panel: #ffffff;
+    --border: #e2e6ee;
+    --text: #1a1d23;
+    --muted: #5a6478;
+    --accent: #2f5bd6;
+    --ok: #2c7a2f;
+    --off: #b02a37;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+header {
+  display: flex; align-items: center; gap: 24px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.brand { font-weight: 700; text-decoration: none; color: var(--text); }
+nav a { color: var(--muted); text-decoration: none; margin-right: 16px; }
+nav a:hover { color: var(--text); }
+main { max-width: 1100px; margin: 24px auto; padding: 0 24px; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+h1 { margin-top: 0; }
+.muted { color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+label { display: flex; flex-direction: column; gap: 4px; }
+input[type=text], input[type=url] {
+  padding: 10px 12px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+}
+button {
+  align-self: flex-start;
+  padding: 10px 18px;
+  background: var(--accent);
+  color: white;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; }
+.wide td.evidence { max-width: 480px; color: var(--muted); }
+.ok { color: var(--ok); }
+.off { color: var(--off); }
+a { color: var(--accent); }
+code { background: var(--bg); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); }
+ul { padding-left: 18px; }

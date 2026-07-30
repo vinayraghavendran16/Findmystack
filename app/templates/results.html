@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ search.tool_name }} — Findmystack{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>{{ search.tool_name }}</h1>
+  <p class="muted">
+    {{ confirmations|length }} confirmed of {{ hit_count }} raw hits &middot;
+    {{ search.created_at.strftime('%Y-%m-%d %H:%M') }} &middot;
+    <a href="/search/{{ search.id }}/export.csv">Export CSV</a>
+  </p>
+
+  {% if confirmations %}
+  <table class="wide">
+    <thead>
+      <tr>
+        <th>Company</th>
+        <th>Confidence</th>
+        <th>Source</th>
+        <th>Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in confirmations %}
+      <tr>
+        <td><strong>{{ c.company }}</strong></td>
+        <td>{{ '%.2f'|format(c.confidence) }} <span class="muted">({{ c.source_type }})</span></td>
+        <td><a href="{{ c.source_url }}" target="_blank" rel="noopener">source</a></td>
+        <td class="evidence">{{ c.evidence_snippet }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No confirmed matches yet.</p>
+  <p class="muted">
+    Reasons this can happen: no API keys configured for search providers,
+    vendor URL not supplied, the verifier is unconfigured
+    (set <code>ANTHROPIC_API_KEY</code>), or the sources didn't back the claim
+    strongly enough.
+  </p>
+  {% endif %}
+</section>
+{% endblock %}

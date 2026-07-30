@@ -73,11 +73,20 @@ async def run_search(db: Session, tool_name: str, vendor_url: str | None) -> mod
         _verify_one(row, raw) for row, (_, raw) in zip(hit_rows, all_hits)
     ])
 
+    # Pass 1: persist verdict on every row FIRST, in one commit. Doing this
+    # before Confirmation inserts avoids a subtle bug: a duplicate-key
+    # IntegrityError on Confirmation triggers db.rollback(), which also
+    # discards any pending Hit mutations in the same session and wipes the
+    # verdict fields for unrelated rows.
     for row, verdict in verdicts:
         row.verdict_confirmed = verdict.confirmed
         row.verdict_company = verdict.company or None
         row.verdict_confidence = verdict.confidence
         row.verdict_note = verdict.note
+    db.commit()
+
+    # Pass 2: insert Confirmations for hits that cleared the threshold.
+    for row, verdict in verdicts:
         if not verdict.confirmed or verdict.confidence < 0.4:
             if verdict.note and verdict.note not in ("", "OK"):
                 log.warning("verifier rejected %s: %s", row.source_url, verdict.note)
@@ -100,8 +109,6 @@ async def run_search(db: Session, tool_name: str, vendor_url: str | None) -> mod
             db.commit()
         except IntegrityError:
             db.rollback()  # duplicate (tool, company, url) — fine
-
-    db.commit()
 
     search.status = "complete"
     search.notes = f"{len(hit_rows)} hits, {sum(1 for _, v in verdicts if v.confirmed)} confirmed"

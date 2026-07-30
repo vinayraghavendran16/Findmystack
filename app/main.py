@@ -96,6 +96,23 @@ def export_csv(search_id: int, db: Session = Depends(get_session)):
     )
 
 
+@app.get("/search/{search_id}/debug", response_class=HTMLResponse)
+def debug_search(search_id: int, request: Request, db: Session = Depends(get_session)):
+    search = db.get(models.Search, search_id)
+    if search is None:
+        return HTMLResponse("Not found", status_code=404)
+    hits = db.execute(
+        select(models.Hit)
+        .where(models.Hit.search_id == search_id)
+        .order_by(models.Hit.verdict_confidence.desc().nullslast(), models.Hit.id)
+    ).scalars().all()
+    return templates.TemplateResponse("debug.html", {
+        "request": request,
+        "search": search,
+        "hits": hits,
+    })
+
+
 @app.get("/history", response_class=HTMLResponse)
 def history(request: Request, db: Session = Depends(get_session)):
     searches = db.execute(

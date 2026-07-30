@@ -32,6 +32,12 @@ class Hit(Base):
     raw_snippet: Mapped[str | None] = mapped_column(Text, nullable=True)
     fetched_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
+    # Verifier outcome (populated for every hit so we can debug rejections)
+    verdict_confirmed: Mapped[bool | None] = mapped_column(nullable=True)
+    verdict_company: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    verdict_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    verdict_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     search: Mapped[Search] = relationship(back_populates="hits")
     confirmation: Mapped["Confirmation | None"] = relationship(back_populates="hit", uselist=False)
 

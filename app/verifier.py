@@ -12,6 +12,7 @@ uses the named tool. Two modes:
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 
 from selectolax.parser import HTMLParser
@@ -19,6 +20,8 @@ from selectolax.parser import HTMLParser
 from .config import ANTHROPIC_API_KEY, VERIFIER_MODEL
 from .http import client
 from .providers.base import RawHit
+
+log = logging.getLogger("findmystack.verifier")
 
 
 MAX_TEXT_CHARS = 15000
@@ -138,7 +141,8 @@ async def verify(hit: RawHit, tool_name: str) -> Verdict:
             messages=[{"role": "user", "content": prompt}],
         )
     except Exception as e:
-        return _fallback_verdict(hit, f"verifier error: {e}")
+        log.error("Claude API error on %s: %s", hit.source_url, e)
+        return _fallback_verdict(hit, f"verifier error: {type(e).__name__}: {e}")
 
     raw = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text").strip()
     try:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -9,6 +10,8 @@ from . import models
 from .providers import all_providers
 from .providers.base import RawHit, SearchRequest
 from .verifier import verify
+
+log = logging.getLogger("findmystack.runner")
 
 
 async def _run_provider(provider, req: SearchRequest) -> tuple[str, list[RawHit]]:
@@ -71,7 +74,13 @@ async def run_search(db: Session, tool_name: str, vendor_url: str | None) -> mod
     ])
 
     for row, verdict in verdicts:
+        row.verdict_confirmed = verdict.confirmed
+        row.verdict_company = verdict.company or None
+        row.verdict_confidence = verdict.confidence
+        row.verdict_note = verdict.note
         if not verdict.confirmed or verdict.confidence < 0.4:
+            if verdict.note and verdict.note not in ("", "OK"):
+                log.warning("verifier rejected %s: %s", row.source_url, verdict.note)
             continue
         conf = models.Confirmation(
             hit_id=row.id,
@@ -92,8 +101,11 @@ async def run_search(db: Session, tool_name: str, vendor_url: str | None) -> mod
         except IntegrityError:
             db.rollback()  # duplicate (tool, company, url) — fine
 
+    db.commit()
+
     search.status = "complete"
     search.notes = f"{len(hit_rows)} hits, {sum(1 for _, v in verdicts if v.confirmed)} confirmed"
     db.commit()
     db.refresh(search)
+    log.info("search %d done: %s", search.id, search.notes)
     return search

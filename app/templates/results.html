@@ -6,7 +6,8 @@
   <p class="muted">
     {{ confirmations|length }} confirmed of {{ hit_count }} raw hits &middot;
     {{ search.created_at.strftime('%Y-%m-%d %H:%M') }} &middot;
-    <a href="/search/{{ search.id }}/export.csv">Export CSV</a>
+    <a href="/search/{{ search.id }}/export.csv">Export CSV</a> &middot;
+    <a href="/search/{{ search.id }}/debug">Debug view (all hits + verdicts)</a>
   </p>
 
   {% if confirmations %}

@@ -56,6 +56,43 @@ async def fetch_visible_text(url: str) -> str:
     return text[:MAX_TEXT_CHARS]
 
 
+def _extract_json(raw: str) -> dict | None:
+    """Parse a JSON object out of Claude's response, tolerating stray prose or fences."""
+    raw = raw.strip()
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+    # Strip code fences.
+    stripped = raw
+    if stripped.startswith("```"):
+        stripped = stripped.strip("`")
+        # Drop optional language tag on the first line.
+        stripped = stripped.split("\n", 1)[-1] if "\n" in stripped else stripped
+    try:
+        return json.loads(stripped.strip())
+    except json.JSONDecodeError:
+        pass
+    # Last-ditch: find the first {...} block that parses.
+    start = raw.find("{")
+    while start != -1:
+        depth = 0
+        for i, c in enumerate(raw[start:], start=start):
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(raw[start:i + 1])
+                    except json.JSONDecodeError:
+                        break
+        start = raw.find("{", start + 1)
+    return None
+
+
 def _fallback_verdict(hit: RawHit, reason: str) -> Verdict:
     return Verdict(
         confirmed=False,
@@ -145,9 +182,8 @@ async def verify(hit: RawHit, tool_name: str) -> Verdict:
         return _fallback_verdict(hit, f"verifier error: {type(e).__name__}: {e}")
 
     raw = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text").strip()
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
+    data = _extract_json(raw)
+    if data is None:
         return _fallback_verdict(hit, f"non-JSON verdict: {raw[:120]}")
 
     company = str(data.get("company") or hit.candidate_company or "").strip()

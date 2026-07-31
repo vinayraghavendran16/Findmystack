@@ -32,10 +32,21 @@ IGNORE = {
     "", "logo", "logos", "company logo", "customer logo", "profile picture",
     "featuredcustomers", "featured customers", "featured customers logo",
     "read more", "case study", "case studies", "testimonial", "testimonials",
+    "featured testimonials", "featured case studies", "featured customer videos",
     "review", "reviews", "video", "videos", "customer story", "success story",
     "close", "menu", "search", "next", "previous", "load more",
     "share", "facebook", "linkedin", "twitter", "youtube",
+    "banner", "cover", "hero", "screenshot",
 }
+
+# Reject obvious anonymised placeholders like "Leading Energy Company",
+# "Large Financial Institution", "Global Insurance Provider" — the FC page
+# uses these when a customer prefers not to be named.
+GENERIC_PLACEHOLDER_RE = re.compile(
+    r"^(leading|large|top|major|global|premier|prominent|well[- ]known|fortune \d+)"
+    r"\s+(\w+\s+){0,3}(company|provider|institution|firm|organization|corporation|bank|insurer)$",
+    re.IGNORECASE,
+)
 
 NAME_RE = re.compile(r"^[A-Z0-9][\w&.\-' ]{1,60}$")
 
@@ -44,8 +55,12 @@ def _clean(text: str) -> str:
     return " ".join((text or "").split()).strip()
 
 
+def _strip_logo_suffix(s: str) -> str:
+    return re.sub(r"\s+(logo|logos|banner|cover|screenshot)\s*$", "", s, flags=re.IGNORECASE).strip()
+
+
 def _looks_like_company(s: str, tool_name: str) -> bool:
-    s = _clean(s)
+    s = _strip_logo_suffix(_clean(s))
     if not s or len(s) > 80 or len(s) < 2:
         return False
     low = s.lower()
@@ -53,6 +68,10 @@ def _looks_like_company(s: str, tool_name: str) -> bool:
         return False
     if tool_name and low == tool_name.lower():
         return False  # the vendor itself
+    if GENERIC_PLACEHOLDER_RE.match(s):
+        return False
+    if low.startswith("featured "):
+        return False
     return bool(NAME_RE.match(s))
 
 
@@ -62,7 +81,7 @@ def _extract_companies(html: str, tool_name: str) -> list[str]:
     seen: set[str] = set()
 
     def add(s: str) -> None:
-        s = _clean(s)
+        s = _strip_logo_suffix(_clean(s))
         if not _looks_like_company(s, tool_name):
             return
         key = s.lower()

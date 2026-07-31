@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>Find companies using a tool</h1>
+  <p class="muted">Every match is cross-checked against the source page by an LLM verifier.</p>
+  <form method="post" action="/search">
+    <label>Tool name
+      <input type="text" name="tool_name" placeholder="e.g. Algosec, Firemon, Snowflake" required>
+    </label>
+    <label>Vendor URL <span class="muted">(optional — unlocks the case-study crawler)</span>
+      <input type="url" name="vendor_url" placeholder="https://www.algosec.com">
+    </label>
+    <button type="submit">Search</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Providers</h2>
+  <table>
+    <thead><tr><th>Provider</th><th>Source type</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for name, stype, ok in provider_status %}
+      <tr>
+        <td>{{ name }}</td>
+        <td>{{ stype }}</td>
+        <td class="{{ 'ok' if ok else 'off' }}">{{ 'configured' if ok else 'stub — needs API key' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if recent %}
+<section class="card">
+  <h2>Recent searches</h2>
+  <ul>
+    {% for s in recent %}
+      <li><a href="/search/{{ s.id }}">{{ s.tool_name }}</a> <span class="muted">— {{ s.created_at.strftime('%Y-%m-%d %H:%M') }} — {{ s.notes or s.status }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

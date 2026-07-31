@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Debug: {{ search.tool_name }} — Findmystack{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Debug: {{ search.tool_name }}</h1>
+  <p class="muted">
+    Every raw hit and what the verifier decided about it &middot;
+    <a href="/search/{{ search.id }}">back to confirmed view</a>
+  </p>
+  {% if hits %}
+  <table class="wide">
+    <thead>
+      <tr>
+        <th>Provider</th>
+        <th>URL</th>
+        <th>Verdict</th>
+        <th>Reason / note</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in hits %}
+      <tr>
+        <td>{{ h.provider }}</td>
+        <td><a href="{{ h.source_url }}" target="_blank" rel="noopener">{{ h.source_url[:80] }}{% if h.source_url|length > 80 %}…{% endif %}</a></td>
+        <td>
+          {% if h.verdict_confirmed is none %}
+            <span class="muted">not verified</span>
+          {% elif h.verdict_confirmed %}
+            <span class="ok">confirmed</span> ({{ '%.2f'|format(h.verdict_confidence or 0) }})<br>
+            <em>{{ h.verdict_company }}</em>
+          {% else %}
+            <span class="off">rejected</span> ({{ '%.2f'|format(h.verdict_confidence or 0) }})
+          {% endif %}
+        </td>
+        <td class="evidence">{{ h.verdict_note or h.raw_snippet or '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No hits.</p>
+  {% endif %}
+</section>
+{% endblock %}
